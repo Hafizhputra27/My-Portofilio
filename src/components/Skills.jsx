@@ -1,169 +1,237 @@
-const ALL_SKILLS = [
-  { name: 'HTML',        logo: 'https://cdn.simpleicons.org/html5/E34F26' },
-  { name: 'CSS',         logo: 'https://cdn.simpleicons.org/css/1572B6' },
-  { name: 'JavaScript',  logo: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-  { name: 'React.js',    logo: 'https://cdn.simpleicons.org/react/61DAFB' },
-  { name: 'Next.js',     logo: 'https://cdn.simpleicons.org/nextdotjs/000000' },
-  { name: 'Python',      logo: 'https://cdn.simpleicons.org/python/3776AB' },
-  { name: 'PHP/Laravel', logo: 'https://cdn.simpleicons.org/laravel/FF2D20' },
-  { name: 'Node.js',     logo: 'https://cdn.simpleicons.org/nodedotjs/339933' },
-  { name: 'Kotlin',      logo: 'https://cdn.simpleicons.org/kotlin/7F52FF' },
-  { name: 'MongoDB',     logo: 'https://cdn.simpleicons.org/mongodb/47A248' },
-  { name: 'Firebase',    logo: 'https://cdn.simpleicons.org/firebase/FFCA28' },
-  { name: 'Supabase',    logo: 'https://cdn.simpleicons.org/supabase/3ECF8E' },
-  { name: 'Vercel',      logo: 'https://cdn.simpleicons.org/vercel/000000' },
-  { name: 'GitHub',      logo: 'https://cdn.simpleicons.org/github/181717' },
-  { name: 'Postman',     logo: 'https://cdn.simpleicons.org/postman/FF6C37' },
-  { name: 'Auth0',       logo: 'https://cdn.simpleicons.org/auth0/EB5424' },
-]
+import { useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { SKILLS_ALL, SKILL_CATEGORIES } from '../data/skills.js'
 
-// Duplicate for seamless loop
-const ROW1 = [...ALL_SKILLS, ...ALL_SKILLS]
-const ROW2 = [...ALL_SKILLS].reverse()
-const ROW2_DUP = [...ROW2, ...ROW2]
+// Duplicate for seamless marquee
+const ROW1 = [...SKILLS_ALL, ...SKILLS_ALL]
+const ROW2 = [...[...SKILLS_ALL].reverse(), ...[...SKILLS_ALL].reverse()]
 
-function SkillCard({ skill }) {
+function SkillBadge({ skill, showTooltip = false }) {
+  const [hovered, setHovered] = useState(false)
+
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        padding: '16px 20px',
-        minWidth: '100px',
-        borderRadius: '16px',
-        background: 'rgba(255,255,255,0.55)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.7)',
-        boxShadow: '0 4px 16px rgba(180,180,220,0.12)',
-        flexShrink: 0,
-        userSelect: 'none',
-      }}
+      style={{ position: 'relative', flexShrink: 0 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <img
-        src={skill.logo}
-        alt={skill.name}
-        style={{ width: '36px', height: '36px', objectFit: 'contain' }}
-      />
-      <span
+      <div
+        className="glass"
         style={{
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--text-mid)',
-          whiteSpace: 'nowrap',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: '14px 18px',
+          minWidth: '90px',
+          cursor: 'default',
+          transform: hovered ? 'scale(1.08)' : 'scale(1)',
+          transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s',
+          boxShadow: hovered
+            ? '0 8px 32px rgba(167,139,250,0.3)'
+            : '0 2px 8px rgba(0,0,0,0.2)',
         }}
       >
-        {skill.name}
-      </span>
+        <img
+          src={skill.logo}
+          alt={skill.name}
+          loading="lazy"
+          style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+        />
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--text-xs)',
+          fontWeight: 'var(--weight-medium)',
+          color: 'var(--text-muted)',
+          whiteSpace: 'nowrap',
+        }}>
+          {skill.name}
+        </span>
+      </div>
+
+      {/* Tooltip */}
+      <AnimatePresence>
+        {hovered && showTooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.9 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute',
+              bottom: 'calc(100% + 8px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(10,10,30,0.95)',
+              border: '1px solid rgba(167,139,250,0.3)',
+              borderRadius: '8px',
+              padding: '5px 10px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-xs)',
+              color: 'var(--accent)',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              zIndex: 100,
+            }}
+          >
+            {skill.name}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
-export default function Skills() {
+// Filter grid badge
+function FilterBadge({ skill }) {
+  const [hovered, setHovered] = useState(false)
   return (
-    <section
-      id="skills"
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.85 }}
+      transition={{ duration: 0.25 }}
+      className="glass"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        paddingTop: '80px',
-        paddingBottom: '80px',
-        overflow: 'hidden',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '10px 16px',
+        cursor: 'default',
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        transition: 'transform 0.2s',
       }}
     >
-      {/* Section heading */}
-      <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-        <h2
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 'clamp(32px, 4vw, 48px)',
-            fontWeight: 700,
-            color: 'var(--text-dark)',
-            margin: '0 0 12px',
-          }}
-        >
-          Skills
-        </h2>
-        <div
-          style={{
-            width: '60px',
-            height: '4px',
-            borderRadius: '2px',
-            background: 'var(--accent)',
-            margin: '0 auto',
-          }}
-        />
+      <img src={skill.logo} alt={skill.name} style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+      <span style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: 'var(--text-xs)',
+        color: 'var(--text-secondary)',
+        whiteSpace: 'nowrap',
+      }}>
+        {skill.name}
+      </span>
+    </motion.div>
+  )
+}
+
+export default function Skills() {
+  const [activeCategory, setActiveCategory] = useState('All')
+
+  const filtered = useMemo(() =>
+    activeCategory === 'All' ? SKILLS_ALL : SKILLS_ALL.filter((s) => s.category === activeCategory),
+    [activeCategory]
+  )
+
+  return (
+    <section id="skills" style={{ paddingTop: 'var(--section-py)', paddingBottom: 'var(--section-py)', overflow: 'hidden' }}>
+      {/* Heading */}
+      <div style={{ textAlign: 'center', marginBottom: '48px', paddingLeft: 'var(--container-px)', paddingRight: 'var(--container-px)' }}>
+        <p className="section-label">Technologies I use</p>
+        <h2 className="section-heading">Skills</h2>
+        <div className="section-divider" />
       </div>
 
-      {/* Row 1 — slides left */}
-      <div style={{ position: 'relative', marginBottom: '20px' }}>
-        {/* Fade edges */}
+      {/* Category filter tabs */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '8px',
+        flexWrap: 'wrap',
+        marginBottom: '48px',
+        paddingLeft: 'var(--container-px)',
+        paddingRight: 'var(--container-px)',
+      }}>
+        {SKILL_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-small)',
+              fontWeight: 'var(--weight-medium)',
+              padding: '8px 20px',
+              borderRadius: 'var(--radius-pill)',
+              border: activeCategory === cat ? '1px solid var(--accent)' : '1px solid var(--glass-border)',
+              background: activeCategory === cat ? 'rgba(167,139,250,0.15)' : 'var(--glass-bg)',
+              color: activeCategory === cat ? 'var(--accent)' : 'var(--text-muted)',
+              cursor: 'pointer',
+              backdropFilter: 'blur(12px)',
+              transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Filter grid (when not 'All') */}
+      <AnimatePresence mode="wait">
+        {activeCategory !== 'All' && (
+          <motion.div
+            key={activeCategory}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              justifyContent: 'center',
+              maxWidth: 'var(--container-max)',
+              margin: '0 auto 48px',
+              paddingLeft: 'var(--container-px)',
+              paddingRight: 'var(--container-px)',
+            }}
+          >
+            {filtered.map((skill) => (
+              <FilterBadge key={skill.name} skill={skill} />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Marquee rows — always visible */}
+      <div style={{ position: 'relative', marginBottom: '16px' }}>
         <div style={{
           position: 'absolute', left: 0, top: 0, bottom: 0, width: '80px',
-          background: 'linear-gradient(to right, var(--bg-main), transparent)',
+          background: 'linear-gradient(to right, var(--bg-base), transparent)',
           zIndex: 2, pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px',
-          background: 'linear-gradient(to left, var(--bg-main), transparent)',
+          background: 'linear-gradient(to left, var(--bg-base), transparent)',
           zIndex: 2, pointerEvents: 'none',
         }} />
         <div className="marquee-track marquee-left">
           {ROW1.map((skill, i) => (
-            <SkillCard key={`r1-${i}`} skill={skill} />
+            <SkillBadge key={`r1-${i}`} skill={skill} showTooltip />
           ))}
         </div>
       </div>
 
-      {/* Row 2 — slides right */}
       <div style={{ position: 'relative' }}>
         <div style={{
           position: 'absolute', left: 0, top: 0, bottom: 0, width: '80px',
-          background: 'linear-gradient(to right, var(--bg-main), transparent)',
+          background: 'linear-gradient(to right, var(--bg-base), transparent)',
           zIndex: 2, pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px',
-          background: 'linear-gradient(to left, var(--bg-main), transparent)',
+          background: 'linear-gradient(to left, var(--bg-base), transparent)',
           zIndex: 2, pointerEvents: 'none',
         }} />
         <div className="marquee-track marquee-right">
-          {ROW2_DUP.map((skill, i) => (
-            <SkillCard key={`r2-${i}`} skill={skill} />
+          {ROW2.map((skill, i) => (
+            <SkillBadge key={`r2-${i}`} skill={skill} showTooltip />
           ))}
         </div>
       </div>
-
-      <style>{`
-        .marquee-track {
-          display: flex;
-          gap: 16px;
-          width: max-content;
-          padding: 4px 0;
-        }
-
-        .marquee-left {
-          animation: scrollLeft 30s linear infinite;
-        }
-        .marquee-right {
-          animation: scrollRight 30s linear infinite;
-        }
-
-        .marquee-left:hover,
-        .marquee-right:hover {
-          animation-play-state: paused;
-        }
-
-        @keyframes scrollLeft {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes scrollRight {
-          0%   { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
-      `}</style>
     </section>
   )
 }

@@ -1,397 +1,334 @@
 import { useRef, useState } from 'react'
 import emailjs from '@emailjs/browser'
-import { Instagram, Mail, Linkedin } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Instagram, Mail, Linkedin, Send } from 'lucide-react'
 
-const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID'
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID'
 const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'
-const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY'
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY'
+
+const socials = [
+  {
+    label: 'Instagram',
+    handle: '@apiskp',
+    href: 'https://instagram.com/apiskp',
+    Icon: Instagram,
+    color: '#e1306c',
+  },
+  {
+    label: 'Email',
+    handle: 'hafizhkarunia27@gmail.com',
+    href: 'mailto:hafizhkarunia27@gmail.com',
+    Icon: Mail,
+    color: 'var(--accent)',
+  },
+  {
+    label: 'LinkedIn',
+    handle: 'ahmad-hafizh-karunia-putra',
+    href: 'https://linkedin.com/in/ahmad-hafizh-karunia-putra',
+    Icon: Linkedin,
+    color: '#0a66c2',
+  },
+]
+
+function SocialLink({ label, handle, href, Icon, color }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <a
+      href={href}
+      target={href.startsWith('http') ? '_blank' : undefined}
+      rel="noopener noreferrer"
+      aria-label={`${label}: ${handle}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '14px',
+        padding: '14px 18px',
+        borderRadius: 'var(--radius-md)',
+        background: hovered ? 'rgba(255,255,255,0.07)' : 'var(--glass-bg)',
+        border: `1px solid ${hovered ? color + '55' : 'var(--glass-border)'}`,
+        color: 'var(--text-primary)',
+        textDecoration: 'none',
+        backdropFilter: 'blur(12px)',
+        transition: 'all 0.25s ease',
+        transform: hovered ? 'translateX(4px)' : 'translateX(0)',
+      }}
+    >
+      <motion.div
+        animate={hovered ? { y: [-2, 2, -2], scale: 1.15 } : { y: 0, scale: 1 }}
+        transition={hovered ? { duration: 0.4, repeat: Infinity } : { duration: 0.2 }}
+        style={{
+          width: 40, height: 40,
+          borderRadius: '10px',
+          background: `${color}18`,
+          border: `1px solid ${color}33`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon size={18} color={color} strokeWidth={1.8} />
+      </motion.div>
+      <div>
+        <div style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-xs)',
+          fontWeight: 'var(--weight-semibold)',
+          color: 'var(--text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          marginBottom: '2px',
+        }}>
+          {label}
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-small)',
+          color: 'var(--text-secondary)',
+        }}>
+          {handle}
+        </div>
+      </div>
+    </a>
+  )
+}
+
+function GlowingInput({ id, name, label, type = 'text', value, onChange, error, placeholder, multiline = false }) {
+  const [focused, setFocused] = useState(false)
+  const Tag = multiline ? 'textarea' : 'input'
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <label
+        htmlFor={id}
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-small)',
+          fontWeight: 'var(--weight-semibold)',
+          color: focused ? 'var(--accent)' : 'var(--text-secondary)',
+          transition: 'color 0.2s',
+        }}
+      >
+        {label}
+      </label>
+      <div
+        style={{
+          borderRadius: 'var(--radius-sm)',
+          padding: '1.5px',
+          background: error
+            ? 'rgba(239,68,68,0.5)'
+            : focused
+              ? 'linear-gradient(135deg, var(--accent), var(--accent-2))'
+              : 'transparent',
+          transition: 'background 0.25s',
+        }}
+      >
+        <Tag
+          id={id}
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={multiline ? 5 : undefined}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '12px 16px',
+            borderRadius: 'calc(var(--radius-sm) - 1px)',
+            border: 'none',
+            background: 'rgba(10,10,30,0.7)',
+            backdropFilter: 'blur(8px)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-small)',
+            color: 'var(--text-primary)',
+            outline: 'none',
+            resize: multiline ? 'vertical' : 'none',
+            transition: 'background 0.2s',
+          }}
+        />
+      </div>
+      {error && (
+        <span style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-xs)',
+          color: '#f87171',
+        }}>
+          {error}
+        </span>
+      )}
+    </div>
+  )
+}
 
 export default function Contact() {
   const formRef = useRef(null)
-  const [formState, setFormState] = useState({ name: '', email: '', message: '' })
+  const [form, setForm]     = useState({ name: '', email: '', message: '' })
   const [errors, setErrors] = useState({})
-  const [status, setStatus] = useState('idle') // 'idle' | 'sending' | 'success' | 'error'
+  const [status, setStatus] = useState('idle') // idle | sending | success | error
 
   function validate() {
-    const newErrors = {}
-    if (!formState.name.trim()) newErrors.name = 'Name is required.'
-    if (!formState.email.trim()) newErrors.email = 'Email is required.'
-    if (!formState.message.trim()) newErrors.message = 'Message is required.'
-    return newErrors
+    const e = {}
+    if (!form.name.trim())    e.name    = 'Name is required.'
+    if (!form.email.trim())   e.email   = 'Email is required.'
+    if (!form.message.trim()) e.message = 'Message is required.'
+    return e
   }
 
   function handleChange(e) {
     const { name, value } = e.target
-    setFormState((prev) => ({ ...prev, [name]: value }))
-    // Clear error for this field on change
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }))
-    }
+    setForm((p) => ({ ...p, [name]: value }))
+    if (errors[name]) setErrors((p) => ({ ...p, [name]: undefined }))
   }
 
   function handleSubmit(e) {
     e.preventDefault()
-    const validationErrors = validate()
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
+    const errs = validate()
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setErrors({})
     setStatus('sending')
     emailjs
       .sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, formRef.current, EMAILJS_PUBLIC_KEY)
-      .then(() => {
-        setStatus('success')
-      })
-      .catch(() => {
-        setStatus('error')
-      })
+      .then(() => setStatus('success'))
+      .catch(() => setStatus('error'))
   }
 
   return (
-    <section
-      id="contact"
-      style={{
-        paddingTop: '80px',
-        paddingBottom: '80px',
-        paddingLeft: '24px',
-        paddingRight: '24px',
-        maxWidth: '1100px',
-        margin: '0 auto',
-      }}
-    >
-      {/* Section heading */}
-      <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-        <h2
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 'clamp(32px, 4vw, 48px)',
-            fontWeight: 700,
-            color: 'var(--text-dark)',
-            margin: '0 0 12px',
-          }}
-        >
-          Contact
-        </h2>
-        <div
-          style={{
-            width: '60px',
-            height: '4px',
-            borderRadius: '2px',
-            background: 'var(--accent)',
-            margin: '0 auto',
-          }}
-        />
+    <section id="contact" className="section-container">
+      {/* Heading */}
+      <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+        <p className="section-label">Get in touch</p>
+        <h2 className="section-heading">Let&apos;s Collaborate</h2>
+        <div className="section-divider" />
       </div>
 
-      {/* Full-width Glass Card split layout */}
       <div
-        className="glass-card contact-grid"
+        className="glass-strong contact-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1fr 1.4fr',
           gap: '48px',
-          padding: '48px',
+          padding: 'clamp(28px, 5vw, 56px)',
+          maxWidth: '1000px',
+          margin: '0 auto',
         }}
       >
-        {/* Left side */}
+        {/* Left — social links */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <h3
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(24px, 3vw, 36px)',
-              fontWeight: 700,
-              color: 'var(--text-dark)',
+          <div>
+            <h3 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--text-h2)',
+              fontWeight: 'var(--weight-bold)',
+              color: 'var(--text-primary)',
+              margin: '0 0 12px',
+              lineHeight: 1.2,
+            }}>
+              Have a project in mind?
+            </h3>
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-small)',
+              color: 'var(--text-muted)',
+              lineHeight: 1.8,
               margin: 0,
-            }}
-          >
-            Let's Collaborate
-          </h3>
-          <p
-            style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '16px',
-              color: 'var(--text-mid)',
-              lineHeight: 1.7,
-              margin: 0,
-            }}
-          >
-            Have a project idea, a question, or want to collaborate? Feel free to reach out
-            through any of the channels below or fill in the form directly.
-          </p>
+            }}>
+              I&apos;m always open to discussing new projects, creative ideas, or opportunities to be part of your vision. Reach out through any channel below.
+            </p>
+          </div>
 
-          {/* Contact buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Instagram */}
-            <a
-              href="https://instagram.com/wisewidyatama"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram @wisewidyatama"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                background: 'rgba(123,127,245,0.08)',
-                border: '1px solid rgba(123,127,245,0.2)',
-                color: 'var(--text-dark)',
-                textDecoration: 'none',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '14px',
-                fontWeight: 500,
-                transition: 'background 0.2s',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
-                <Instagram size={18} color="var(--accent)" strokeWidth={1.8} />
-              </span>
-              @wisewidyatama
-            </a>
-
-            {/* Email */}
-            <a
-              href="mailto:ahmad@example.com"
-              aria-label="Send email"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                background: 'rgba(123,127,245,0.08)',
-                border: '1px solid rgba(123,127,245,0.2)',
-                color: 'var(--text-dark)',
-                textDecoration: 'none',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '14px',
-                fontWeight: 500,
-                transition: 'background 0.2s',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
-                <Mail size={18} color="var(--accent)" strokeWidth={1.8} />
-              </span>
-              ahmad@example.com
-            </a>
-
-            {/* LinkedIn */}
-            <a
-              href="https://linkedin.com/in/ahmad-hafizh"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn profile"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                background: 'rgba(123,127,245,0.08)',
-                border: '1px solid rgba(123,127,245,0.2)',
-                color: 'var(--text-dark)',
-                textDecoration: 'none',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '14px',
-                fontWeight: 500,
-                transition: 'background 0.2s',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
-                <Linkedin size={18} color="var(--accent)" strokeWidth={1.8} />
-              </span>
-              linkedin.com/in/ahmad-hafizh
-            </a>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {socials.map((s) => (
+              <SocialLink key={s.label} {...s} />
+            ))}
           </div>
         </div>
 
-        {/* Right side — form */}
+        {/* Right — form */}
         <div>
           {status === 'success' ? (
-            <div
-              data-testid="success-message"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass"
               style={{
-                padding: '24px',
-                borderRadius: '12px',
-                background: 'rgba(34,197,94,0.1)',
-                border: '1px solid rgba(34,197,94,0.3)',
-                color: '#166534',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '15px',
-                lineHeight: 1.6,
+                padding: '32px',
+                textAlign: 'center',
+                color: '#4ade80',
               }}
             >
-              Message sent successfully! I'll get back to you soon.
-            </div>
+              <div style={{ fontSize: '2rem', marginBottom: '12px' }}>✓</div>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)' }}>
+                Message sent! I&apos;ll get back to you soon.
+              </p>
+            </motion.div>
           ) : (
-            <form ref={formRef} onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Name field */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label
-                  htmlFor="name"
-                  style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'var(--text-dark)',
-                  }}
-                >
-                  Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={formState.name}
-                  onChange={handleChange}
-                  placeholder="Your full name"
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    border: errors.name
-                      ? '1px solid #ef4444'
-                      : '1px solid rgba(123,127,245,0.25)',
-                    background: 'rgba(255,255,255,0.6)',
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '14px',
-                    color: 'var(--text-dark)',
-                    outline: 'none',
-                  }}
-                />
-                {errors.name && (
-                  <span
-                    data-testid="error-name"
-                    style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#ef4444' }}
-                  >
-                    {errors.name}
-                  </span>
-                )}
-              </div>
+            <form
+              ref={formRef}
+              onSubmit={handleSubmit}
+              noValidate
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+            >
+              <GlowingInput
+                id="name" name="name" label="Name"
+                value={form.name} onChange={handleChange}
+                placeholder="Your full name" error={errors.name}
+              />
+              <GlowingInput
+                id="email" name="email" label="Email" type="email"
+                value={form.email} onChange={handleChange}
+                placeholder="email@example.com" error={errors.email}
+              />
+              <GlowingInput
+                id="message" name="message" label="Message" multiline
+                value={form.message} onChange={handleChange}
+                placeholder="Tell me about your project..." error={errors.message}
+              />
 
-              {/* Email field */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label
-                  htmlFor="email"
-                  style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'var(--text-dark)',
-                  }}
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formState.email}
-                  onChange={handleChange}
-                  placeholder="email@example.com"
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    border: errors.email
-                      ? '1px solid #ef4444'
-                      : '1px solid rgba(123,127,245,0.25)',
-                    background: 'rgba(255,255,255,0.6)',
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '14px',
-                    color: 'var(--text-dark)',
-                    outline: 'none',
-                  }}
-                />
-                {errors.email && (
-                  <span
-                    data-testid="error-email"
-                    style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#ef4444' }}
-                  >
-                    {errors.email}
-                  </span>
-                )}
-              </div>
-
-              {/* Message field */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label
-                  htmlFor="message"
-                  style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'var(--text-dark)',
-                  }}
-                >
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formState.message}
-                  onChange={handleChange}
-                  placeholder="Write your message here..."
-                  rows={5}
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    border: errors.message
-                      ? '1px solid #ef4444'
-                      : '1px solid rgba(123,127,245,0.25)',
-                    background: 'rgba(255,255,255,0.6)',
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '14px',
-                    color: 'var(--text-dark)',
-                    outline: 'none',
-                    resize: 'vertical',
-                  }}
-                />
-                {errors.message && (
-                  <span
-                    data-testid="error-message"
-                    style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#ef4444' }}
-                  >
-                    {errors.message}
-                  </span>
-                )}
-              </div>
-
-              {/* Error status message */}
               {status === 'error' && (
-                <div
-                  data-testid="error-message"
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    background: 'rgba(239,68,68,0.1)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    color: '#991b1b',
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '14px',
-                  }}
-                >
-                  Something went wrong. Please try again or contact me directly via email.
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.25)',
+                  color: '#f87171',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-small)',
+                }}>
+                  Something went wrong. Please try again or email me directly.
                 </div>
               )}
 
-              {/* Submit button */}
               <button
                 type="submit"
                 disabled={status === 'sending'}
+                className="btn-shimmer"
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
                   padding: '14px 28px',
-                  borderRadius: '9999px',
-                  background: status === 'sending' ? 'rgba(123,127,245,0.5)' : 'var(--accent)',
+                  borderRadius: 'var(--radius-pill)',
+                  background: status === 'sending'
+                    ? 'rgba(167,139,250,0.3)'
+                    : 'linear-gradient(135deg, var(--accent), var(--accent-2))',
                   color: '#fff',
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: '15px',
-                  fontWeight: 600,
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-small)',
+                  fontWeight: 'var(--weight-semibold)',
                   border: 'none',
                   cursor: status === 'sending' ? 'not-allowed' : 'pointer',
-                  transition: 'opacity 0.2s',
                   alignSelf: 'flex-start',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  boxShadow: '0 4px 20px rgba(167,139,250,0.3)',
                 }}
+                onMouseEnter={(e) => status !== 'sending' && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
               >
+                <Send size={16} />
                 {status === 'sending' ? 'Sending...' : 'Send Message'}
               </button>
             </form>
@@ -399,13 +336,9 @@ export default function Contact() {
         </div>
       </div>
 
-      {/* Responsive: single column on mobile */}
       <style>{`
         @media (max-width: 767px) {
-          .contact-grid {
-            grid-template-columns: 1fr !important;
-            padding: 24px !important;
-          }
+          .contact-grid { grid-template-columns: 1fr !important; padding: 24px !important; }
         }
       `}</style>
     </section>

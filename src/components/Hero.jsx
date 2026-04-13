@@ -1,268 +1,424 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion'
 import ProfilePhoto from './ProfilePhoto.jsx'
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: 'easeOut' },
-  }),
+/* ─── Cursor follower ─── */
+function CursorFollower() {
+  const mx = useMotionValue(0)
+  const my = useMotionValue(0)
+  const dotX = useSpring(mx, { stiffness: 600, damping: 40 })
+  const dotY = useSpring(my, { stiffness: 600, damping: 40 })
+  const ringX = useSpring(mx, { stiffness: 120, damping: 18 })
+  const ringY = useSpring(my, { stiffness: 120, damping: 18 })
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const move = (e) => { mx.set(e.clientX); my.set(e.clientY) }
+    const enter = () => setVisible(true)
+    const leave = () => setVisible(false)
+    window.addEventListener('mousemove', move)
+    window.addEventListener('mouseenter', enter)
+    window.addEventListener('mouseleave', leave)
+    return () => {
+      window.removeEventListener('mousemove', move)
+      window.removeEventListener('mouseenter', enter)
+      window.removeEventListener('mouseleave', leave)
+    }
+  }, [mx, my])
+
+  if (!visible) return null
+  return (
+    <>
+      {/* Ring */}
+      <motion.div
+        style={{
+          position: 'fixed',
+          top: -16, left: -16,
+          width: 32, height: 32,
+          borderRadius: '50%',
+          border: '1.5px solid rgba(167,139,250,0.6)',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          x: ringX, y: ringY,
+        }}
+      />
+      {/* Dot */}
+      <motion.div
+        style={{
+          position: 'fixed',
+          top: -4, left: -4,
+          width: 8, height: 8,
+          borderRadius: '50%',
+          background: 'var(--accent)',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          x: dotX, y: dotY,
+        }}
+      />
+    </>
+  )
 }
 
+/* ─── Particles ─── */
+const PARTICLES = Array.from({ length: 25 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  size: Math.random() * 3 + 1,
+  duration: Math.random() * 12 + 8,
+  delay: Math.random() * 6,
+}))
+
+function Particles() {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+      {PARTICLES.map((p) => (
+        <motion.div
+          key={p.id}
+          style={{
+            position: 'absolute',
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            borderRadius: '50%',
+            background: `rgba(167, 139, 250, ${Math.random() * 0.4 + 0.1})`,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            opacity: [0, 0.7, 0],
+            scale: [0.8, 1.2, 0.8],
+          }}
+          transition={{
+            duration: p.duration,
+            delay: p.delay,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/* ─── Typed text ─── */
+const ROLES = ['Project Manager', 'Full-Stack Developer', 'Innovator', 'UI / UX Enthusiast']
+
+function TypedText() {
+  const [roleIndex, setRoleIndex] = useState(0)
+  const [displayed, setDisplayed] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [pause, setPause] = useState(false)
+
+  useEffect(() => {
+    if (pause) return
+    const target = ROLES[roleIndex]
+    if (!deleting && displayed.length < target.length) {
+      const t = setTimeout(() => setDisplayed(target.slice(0, displayed.length + 1)), 55)
+      return () => clearTimeout(t)
+    }
+    if (!deleting && displayed.length === target.length) {
+      setPause(true)
+      const t = setTimeout(() => { setPause(false); setDeleting(true) }, 2000)
+      return () => clearTimeout(t)
+    }
+    if (deleting && displayed.length > 0) {
+      const t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 32)
+      return () => clearTimeout(t)
+    }
+    if (deleting && displayed.length === 0) {
+      setDeleting(false)
+      setRoleIndex((i) => (i + 1) % ROLES.length)
+    }
+  }, [displayed, deleting, roleIndex, pause])
+
+  return (
+    <span style={{ color: 'var(--accent)' }}>
+      {displayed}
+      <motion.span
+        animate={{ opacity: [1, 0] }}
+        transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
+        style={{ borderRight: '2px solid var(--accent)', marginLeft: '2px' }}
+      />
+    </span>
+  )
+}
+
+/* ─── Letter animation ─── */
+function AnimatedName({ text }) {
+  const chars = text.split('')
+  return (
+    <span aria-label={text}>
+      {chars.map((ch, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 + i * 0.045, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          style={{ display: ch === ' ' ? 'inline' : 'inline-block' }}
+        >
+          {ch === ' ' ? '\u00A0' : ch}
+        </motion.span>
+      ))}
+    </span>
+  )
+}
+
+/* ─── Stat counter ─── */
+function StatItem({ value, label }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 'clamp(1.4rem, 3vw, 2rem)',
+        fontWeight: 'var(--weight-bold)',
+        color: 'var(--text-primary)',
+        lineHeight: 1.1,
+      }}>
+        {value}
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--text-xs)',
+        fontWeight: 'var(--weight-medium)',
+        color: 'var(--text-muted)',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        marginTop: 4,
+      }}>
+        {label}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Main component ─── */
 export default function Hero() {
   return (
-    <section
-      id="hero"
-      style={{
-        paddingTop: '120px',
-        paddingBottom: '0',
-        paddingLeft: '24px',
-        paddingRight: '24px',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        overflow: 'hidden',
-      }}
-    >
-      <div
+    <>
+      <CursorFollower />
+      <section
+        id="hero"
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '48px',
-          alignItems: 'flex-end',
+          position: 'relative',
+          paddingTop: 'clamp(120px, 16vw, 160px)',
+          paddingBottom: 'clamp(48px, 6vw, 80px)',
+          paddingLeft: 'var(--container-px)',
+          paddingRight: 'var(--container-px)',
+          maxWidth: 'var(--container-max)',
+          margin: '0 auto',
+          overflow: 'hidden',
         }}
-        className="hero-grid"
       >
-        {/* Left column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <Particles />
 
-          {/* 1. Status badge */}
+        <div
+          className="hero-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 'clamp(32px, 5vw, 64px)',
+            alignItems: 'center',
+          }}
+        >
+          {/* Left column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative', zIndex: 1 }}>
+
+            {/* Status badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+            >
+              <span
+                className="glass-pill"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 16px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-xs)',
+                  fontWeight: 'var(--weight-medium)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <span
+                  style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: '#22c55e', flexShrink: 0,
+                    boxShadow: '0 0 8px rgba(34,197,94,0.7)',
+                    animation: 'glowPulse 2s ease-in-out infinite',
+                  }}
+                />
+                Information Systems · Widyatama University
+              </span>
+            </motion.div>
+
+            {/* Name */}
+            <h1
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'var(--text-hero)',
+                fontWeight: 'var(--weight-black)',
+                color: 'var(--text-primary)',
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+                margin: 0,
+              }}
+            >
+              <AnimatedName text="Ahmad Hafizh" />
+              <br />
+              <AnimatedName text="Karunia " />
+              <motion.span
+                className="text-gradient"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2, duration: 0.6 }}
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 'var(--weight-black)',
+                  fontStyle: 'italic',
+                }}
+              >
+                Putra
+              </motion.span>
+            </h1>
+
+            {/* Subtitle / typed */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.4, duration: 0.5 }}
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                fontWeight: 'var(--weight-medium)',
+                color: 'var(--text-secondary)',
+                margin: 0,
+                minHeight: '1.6em',
+              }}
+            >
+              <TypedText />
+            </motion.p>
+
+            {/* Bio */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.6, duration: 0.5 }}
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--text-body)',
+                lineHeight: 1.75,
+                color: 'var(--text-muted)',
+                margin: 0,
+                maxWidth: '480px',
+              }}
+            >
+              Information Systems undergraduate passionate about software development,
+              project management, and technology innovation — building impactful digital
+              experiences across the full stack.
+            </motion.p>
+
+            {/* CTA buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.8, duration: 0.5 }}
+              style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}
+            >
+              <a
+                href="#projects"
+                className="btn-shimmer"
+                style={{
+                  display: 'inline-block',
+                  padding: '13px 28px',
+                  borderRadius: 'var(--radius-pill)',
+                  background: 'rgba(255,255,255,0.9)',
+                  color: '#000',
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: 'var(--weight-semibold)',
+                  fontSize: 'var(--text-small)',
+                  textDecoration: 'none',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  boxShadow: '0 4px 24px rgba(255,255,255,0.15)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,255,255,0.25)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 24px rgba(255,255,255,0.15)'
+                }}
+              >
+                View Projects
+              </a>
+              <a
+                href="#contact"
+                className="glass-pill"
+                style={{
+                  display: 'inline-block',
+                  padding: '13px 28px',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: 'var(--weight-semibold)',
+                  fontSize: 'var(--text-small)',
+                  textDecoration: 'none',
+                  transition: 'transform 0.2s, background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.background = ''
+                }}
+              >
+                Let&apos;s Talk
+              </a>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.0, duration: 0.6 }}
+              style={{ display: 'flex', gap: '32px', flexWrap: 'wrap', paddingTop: '8px' }}
+            >
+              {[
+                { value: '3+', label: 'Projects' },
+                { value: 'PKM', label: 'Researcher' },
+                { value: '87+', label: 'Teams Led' },
+              ].map((s, i) => (
+                <StatItem key={s.label} {...s} />
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right column */}
           <motion.div
-            custom={0}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
           >
-            <span
-              style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: '#22c55e',
-                display: 'inline-block',
-                animation: 'statusPulse 2s ease-in-out infinite',
-                flexShrink: 0,
-              }}
-            />
-            <span
-              style={{
-                fontSize: '14px',
-                color: 'var(--text-mid)',
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
-              Informatics Student · Widyatama University
-            </span>
-          </motion.div>
-
-          {/* 2. H1 heading */}
-          <motion.h1
-            custom={1}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(40px, 5vw, 64px)',
-              fontWeight: 700,
-              lineHeight: 1.1,
-              color: 'var(--text-dark)',
-              margin: 0,
-            }}
-          >
-            Ahmad Hafizh
-            <br />
-            Karunia{' '}
-            <em
-              style={{
-                color: 'var(--accent)',
-                fontStyle: 'italic',
-              }}
-            >
-              Putra
-            </em>
-          </motion.h1>
-
-          {/* 3. Role line */}
-          <motion.p
-            custom={2}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '18px',
-              fontWeight: 500,
-              color: 'var(--text-mid)',
-              margin: 0,
-              letterSpacing: '0.02em',
-            }}
-          >
-            Project Manager · Developer · Innovator
-          </motion.p>
-
-          {/* 4. Bio paragraph */}
-          <motion.p
-            custom={3}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '16px',
-              lineHeight: 1.7,
-              color: 'var(--text-mid)',
-              margin: 0,
-            }}
-          >
-            I'm an Information Systems undergraduate at Widyatama University Bandung,
-            passionate about software development, project management, and technology innovation.
-            With experience in PKM-KC, national events, and real-world app development, I'm
-            ready to contribute to impactful projects.
-          </motion.p>
-
-          {/* 5. CTA buttons */}
-          <motion.div
-            custom={4}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}
-          >
-            <a
-              href="#projects"
-              style={{
-                display: 'inline-block',
-                padding: '12px 28px',
-                borderRadius: '9999px',
-                backgroundColor: 'var(--text-dark)',
-                color: '#ffffff',
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: 600,
-                fontSize: '15px',
-                textDecoration: 'none',
-                transition: 'opacity 0.2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-            >
-              View Projects
-            </a>
-            <a
-              href="#contact"
-              style={{
-                display: 'inline-block',
-                padding: '12px 28px',
-                borderRadius: '9999px',
-                border: '2px solid var(--accent)',
-                color: 'var(--accent)',
-                backgroundColor: 'transparent',
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: 600,
-                fontSize: '15px',
-                textDecoration: 'none',
-                transition: 'background-color 0.2s, color 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--accent)'
-                e.currentTarget.style.color = '#ffffff'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = 'var(--accent)'
-              }}
-            >
-              Let&apos;s Talk
-            </a>
-          </motion.div>
-
-          {/* 6. Stats row */}
-          <motion.div
-            custom={5}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0',
-              flexWrap: 'wrap',
-            }}
-          >
-            {[
-              { value: '3+', label: 'Projects' },
-              { value: 'PKM', label: 'Researcher' },
-              { value: '1', label: 'National Event' },
-            ].map((stat, i) => (
-              <React.Fragment key={stat.label}>
-                {i > 0 && (
-                  <div
-                    style={{
-                      width: '1px',
-                      height: '36px',
-                      backgroundColor: 'var(--text-light)',
-                      margin: '0 20px',
-                      opacity: 0.5,
-                    }}
-                  />
-                )}
-                <div style={{ textAlign: 'center' }}>
-                  <div
-                    style={{
-                      fontFamily: "'Playfair Display', serif",
-                      fontSize: '22px',
-                      fontWeight: 700,
-                      color: 'var(--text-dark)',
-                    }}
-                  >
-                    {stat.value}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontSize: '13px',
-                      color: 'var(--text-light)',
-                    }}
-                  >
-                    {stat.label}
-                  </div>
-                </div>
-              </React.Fragment>
-            ))}
+            <ProfilePhoto />
           </motion.div>
         </div>
 
-        {/* Right column — Profile Photo */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-          <ProfilePhoto />
-        </div>
-      </div>
-
-      {/* Responsive: single column below 768px */}
-      <style>{`
-        @keyframes statusPulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.85); }
-        }
-
-        @media (max-width: 767px) {
-          .hero-grid {
-            grid-template-columns: 1fr !important;
+        <style>{`
+          @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 6px rgba(34,197,94,0.7); }
+            50%       { box-shadow: 0 0 14px rgba(34,197,94,0); }
           }
-        }
-      `}</style>
-    </section>
+          @media (max-width: 767px) {
+            .hero-grid { grid-template-columns: 1fr !important; }
+          }
+        `}</style>
+      </section>
+    </>
   )
 }

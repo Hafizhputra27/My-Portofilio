@@ -20,9 +20,9 @@ vi.mock('lucide-react', () => ({
 import Navbar from '../Navbar.jsx';
 
 describe('Navbar — unit tests', () => {
-  it('renders logo text "Ahmad.dev"', () => {
+  it('renders logo text "Hafizh."', () => {
     render(<Navbar />);
-    expect(screen.getByText('Ahmad.dev')).toBeInTheDocument();
+    expect(screen.getByText('Hafizh.')).toBeInTheDocument();
   });
 
   it('hash links have correct hrefs (#about, #projects, #experience, #contact)', () => {

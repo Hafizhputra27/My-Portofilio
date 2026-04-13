@@ -1,15 +1,22 @@
 export default function Footer() {
+  const currentYear = new Date().getFullYear()
   return (
     <footer
       style={{
         textAlign: 'center',
-        padding: '32px 0',
-        fontFamily: "'DM Sans', sans-serif",
-        fontSize: '14px',
-        color: 'var(--text-light)',
+        padding: '40px 24px',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        marginTop: '0',
       }}
     >
-      © 2026 Ahmad Hafizh Karunia Putra · Widyatama University
+      <p style={{
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--text-small)',
+        color: 'var(--text-muted)',
+        margin: '0 0 8px',
+      }}>
+        © {currentYear} Ahmad Hafizh Karunia Putra · Widyatama University
+      </p>
     </footer>
-  );
+  )
 }

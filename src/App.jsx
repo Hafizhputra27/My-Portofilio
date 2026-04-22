@@ -9,11 +9,11 @@ import Contact from './components/Contact.jsx'
 import Footer from './components/Footer.jsx'
 
 export default function App() {
-  // Always dark mode — no toggle
+  // Default to light mode
   useEffect(() => {
-    document.documentElement.classList.add('dark')
-    document.documentElement.classList.remove('light')
-    localStorage.theme = 'dark'
+    document.documentElement.classList.remove('dark')
+    document.documentElement.classList.add('light')
+    localStorage.theme = 'light'
   }, [])
 
   return (

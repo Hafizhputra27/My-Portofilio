@@ -114,7 +114,7 @@ function TypedText() {
     if (pause) return
     const target = ROLES[roleIndex]
     if (!deleting && displayed.length < target.length) {
-      const t = setTimeout(() => setDisplayed(target.slice(0, displayed.length + 1)), 55)
+      const t = setTimeout(() => setDisplayed(target.slice(0, displayed.length + 1)), 60)
       return () => clearTimeout(t)
     }
     if (!deleting && displayed.length === target.length) {
@@ -123,7 +123,7 @@ function TypedText() {
       return () => clearTimeout(t)
     }
     if (deleting && displayed.length > 0) {
-      const t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 32)
+      const t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 25)
       return () => clearTimeout(t)
     }
     if (deleting && displayed.length === 0) {
@@ -133,12 +133,12 @@ function TypedText() {
   }, [displayed, deleting, roleIndex, pause])
 
   return (
-    <span style={{ color: 'var(--accent)' }}>
+    <span style={{ color: '#7c3aed', fontWeight: '800' }}>
       {displayed}
       <motion.span
         animate={{ opacity: [1, 0] }}
         transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
-        style={{ borderRight: '2px solid var(--accent)', marginLeft: '2px' }}
+        style={{ borderRight: '2px solid #7c3aed', marginLeft: '2px' }}
       />
     </span>
   )
@@ -146,20 +146,44 @@ function TypedText() {
 
 /* ─── Letter animation ─── */
 function AnimatedName({ text }) {
-  const chars = text.split('')
+  const words = text.split(' ')
+  let charIndex = 0
+
   return (
     <span aria-label={text}>
-      {chars.map((ch, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 + i * 0.045, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          style={{ display: ch === ' ' ? 'inline' : 'inline-block' }}
-        >
-          {ch === ' ' ? '\u00A0' : ch}
-        </motion.span>
-      ))}
+      {words.map((word, wIdx) => {
+        const chars = word.split('')
+        const wordSpan = (
+          <span key={wIdx} style={{ whiteSpace: 'nowrap' }}>
+            {chars.map((ch, cIdx) => {
+              const i = charIndex++
+              return (
+                <motion.span
+                  key={cIdx}
+                  initial={{ opacity: 0, y: 32 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 + i * 0.045, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ display: 'inline-block' }}
+                >
+                  {ch}
+                </motion.span>
+              )
+            })}
+          </span>
+        )
+        
+        // increment charIndex for space to keep animation timing identical
+        if (wIdx < words.length - 1) {
+          charIndex++
+        }
+
+        return (
+          <span key={wIdx}>
+            {wordSpan}
+            {wIdx < words.length - 1 && ' '}
+          </span>
+        )
+      })}
     </span>
   )
 }
@@ -167,7 +191,7 @@ function AnimatedName({ text }) {
 /* ─── Stat counter ─── */
 function StatItem({ value, label }) {
   return (
-    <div style={{ textAlign: 'center' }}>
+    <div className="glass" style={{ textAlign: 'center', padding: '1rem' }}>
       <div style={{
         fontFamily: 'var(--font-display)',
         fontSize: 'clamp(1.4rem, 3vw, 2rem)',
@@ -199,6 +223,7 @@ export default function Hero() {
       <CursorFollower />
       <section
         id="hero"
+        className="relative"
         style={{
           position: 'relative',
           paddingTop: 'clamp(120px, 16vw, 160px)',
@@ -208,8 +233,11 @@ export default function Hero() {
           maxWidth: 'var(--container-max)',
           margin: '0 auto',
           overflow: 'hidden',
+          // Ensure the background mesh is behind everything
         }}
       >
+        {/* Animated gradient mesh — sits behind everything */}
+        <div className="bg-mesh" aria-hidden="true" />
         <Particles />
 
         <div
@@ -219,6 +247,8 @@ export default function Hero() {
             gridTemplateColumns: '1fr 1fr',
             gap: 'clamp(32px, 5vw, 64px)',
             alignItems: 'center',
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           {/* Left column */}
@@ -229,30 +259,32 @@ export default function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5 }}
+              className="glass"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 16px',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--text-xs)',
+                fontWeight: 'var(--weight-medium)',
+                color: 'var(--text-secondary)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 'var(--radius-sm)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+              }}
             >
               <span
-                className="glass-pill"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '6px 16px',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: 'var(--weight-medium)',
-                  color: 'var(--text-secondary)',
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: '#22c55e', flexShrink: 0,
+                  boxShadow: '0 0 8px rgba(34,197,94,0.7)',
+                  animation: 'glowPulse 2s ease-in-out infinite',
                 }}
-              >
-                <span
-                  style={{
-                    width: 8, height: 8, borderRadius: '50%',
-                    background: '#22c55e', flexShrink: 0,
-                    boxShadow: '0 0 8px rgba(34,197,94,0.7)',
-                    animation: 'glowPulse 2s ease-in-out infinite',
-                  }}
-                />
-                Information Systems · Widyatama University
-              </span>
+              />
+              Information Systems · Widyatama University
             </motion.div>
 
             {/* Name */}
@@ -261,10 +293,10 @@ export default function Hero() {
                 fontFamily: 'var(--font-display)',
                 fontSize: 'var(--text-hero)',
                 fontWeight: 'var(--weight-black)',
-                color: 'var(--text-primary)',
+                color: '#1e293b',
                 lineHeight: 1.05,
                 letterSpacing: '-0.02em',
-                margin: 0,
+                margin: '0 0 8px 0',
               }}
             >
               <AnimatedName text="Ahmad Hafizh" />
@@ -292,17 +324,16 @@ export default function Hero() {
               transition={{ delay: 1.4, duration: 0.5 }}
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                fontWeight: 'var(--weight-medium)',
-                color: 'var(--text-secondary)',
-                margin: 0,
+                fontSize: 'clamp(1.1rem, 2vw, 1.35rem)',
+                fontWeight: 'var(--weight-bold)',
+                letterSpacing: '-0.01em',
+                margin: '8px 0 16px 0',
                 minHeight: '1.6em',
               }}
             >
               <TypedText />
             </motion.p>
 
-            {/* Bio */}
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -311,8 +342,8 @@ export default function Hero() {
                 fontFamily: 'var(--font-body)',
                 fontSize: 'var(--text-body)',
                 lineHeight: 1.75,
-                color: 'var(--text-muted)',
-                margin: 0,
+                color: '#475569',
+                margin: '0 0 32px 0',
                 maxWidth: '480px',
               }}
             >
@@ -326,31 +357,34 @@ export default function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.8, duration: 0.5 }}
-              style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}
+              style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}
             >
               <a
                 href="#projects"
-                className="btn-shimmer"
                 style={{
-                  display: 'inline-block',
-                  padding: '13px 28px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '14px 32px',
                   borderRadius: 'var(--radius-pill)',
-                  background: 'rgba(255,255,255,0.9)',
-                  color: '#000',
+                  background: '#4f46e5', /* Deep Cobalt */
+                  color: '#ffffff',
                   fontFamily: 'var(--font-body)',
-                  fontWeight: 'var(--weight-semibold)',
-                  fontSize: 'var(--text-small)',
+                  fontWeight: '700',
+                  fontSize: 'var(--text-body)',
                   textDecoration: 'none',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  boxShadow: '0 4px 24px rgba(255,255,255,0.15)',
+                  boxShadow: '0 8px 20px rgba(79, 70, 229, 0.3)',
+                  transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,255,255,0.25)'
+                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(79, 70, 229, 0.4)'
+                  e.currentTarget.style.background = '#4338ca'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = '0 4px 24px rgba(255,255,255,0.15)'
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(79, 70, 229, 0.3)'
+                  e.currentTarget.style.background = '#4f46e5'
                 }}
               >
                 View Projects
@@ -359,22 +393,29 @@ export default function Hero() {
                 href="#contact"
                 className="glass-pill"
                 style={{
-                  display: 'inline-block',
-                  padding: '13px 28px',
-                  color: 'var(--text-primary)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '14px 32px',
+                  color: '#1e293b', /* Deep charcoal */
                   fontFamily: 'var(--font-body)',
-                  fontWeight: 'var(--weight-semibold)',
-                  fontSize: 'var(--text-small)',
+                  fontWeight: '600',
+                  fontSize: 'var(--text-body)',
                   textDecoration: 'none',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(0, 0, 0, 0.05)',
+                  borderRadius: 'var(--radius-pill)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
                   transition: 'transform 0.2s, background 0.2s',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.background = ''
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.7)'
                 }}
               >
                 Let&apos;s Talk

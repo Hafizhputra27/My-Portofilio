@@ -1,219 +1,218 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 
 const navLinks = [
-  { label: 'About',      href: '#about' },
-  { label: 'Projects',   href: '#projects' },
-  { label: 'Experience', href: '#experience' },
-  { label: 'Skills',     href: '#skills' },
-  { label: 'Contact',    href: '#contact' },
+  { label: 'Home', id: 'hero', href: '#hero' },
+  { label: 'About', id: 'about', href: '#about' },
+  { label: 'Projects', id: 'projects', href: '#projects' },
+  { label: 'Experience', id: 'experience', href: '#experience' },
+  { label: 'Skills', id: 'skills', href: '#skills' },
+  { label: 'Contact', id: 'contact', href: '#contact' },
 ]
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [activeSection, setActiveSection] = useState('hero')
+  const navbarRef = useRef(null)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
+    const onScroll = () => {
+      const currentScrollPos = window.scrollY
+      setScrolled(currentScrollPos > 50)
+
+      // Scroll spy for active link
+      const scrollPosWithOffset = currentScrollPos + 150
+      let current = 'hero'
+      for (const link of navLinks) {
+        const el = document.getElementById(link.id)
+        if (el && el.offsetTop <= scrollPosWithOffset) {
+          current = link.id
+        }
+      }
+      setActiveSection(current)
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
+    // Initial check
+    onScroll()
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   return (
     <header
+      ref={navbarRef}
       style={{
         position: 'fixed',
-        top: '16px',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        top: 0,
+        left: 0,
+        width: '100%',
         zIndex: 1000,
-        width: 'calc(100% - 40px)',
-        maxWidth: '880px',
+        transition: 'all 0.3s ease',
+        background: scrolled ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(10px)' : 'none',
+        boxShadow: scrolled ? '0 4px 20px rgba(0, 0, 0, 0.05)' : 'none',
+        padding: scrolled ? '0.75rem 2rem' : '1.25rem 2rem',
       }}
     >
-      <motion.nav
-        className="glass-pill"
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        style={{
-          padding: '10px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          boxShadow: scrolled
-            ? '0 12px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12)'
-            : '0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1)',
-          transition: 'box-shadow 0.3s ease',
-        }}
-        aria-label="Main navigation"
-      >
+      <div style={{
+        maxWidth: 'var(--container-max)',
+        margin: 'auto',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
         {/* Logo */}
-        <a
+        <motion.a
           href="#hero"
+          className="font-display"
           style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 'var(--weight-bold)',
-            fontSize: '1.15rem',
-            color: 'var(--text-primary)',
+            fontSize: '1.4rem',
+            fontWeight: 800,
             textDecoration: 'none',
-            letterSpacing: '-0.01em',
-            flexShrink: 0,
+            letterSpacing: '-0.02em',
+            background: 'linear-gradient(to right, #8b5cf6, #3b82f6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
           }}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
         >
           Hafizh
-        </a>
+        </motion.a>
 
-        {/* Center links */}
-        <ul
-          className="nav-center-links"
+        {/* Desktop links */}
+        <motion.ul
+          className="nav-links-desktop"
           style={{
             display: 'flex',
-            gap: '4px',
+            gap: '1.75rem',
             listStyle: 'none',
+            alignItems: 'center',
+            margin: 0,
+            padding: 0,
           }}
         >
-          {navLinks.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 'var(--weight-medium)',
-                  fontSize: 'var(--text-small)',
-                  color: 'var(--text-secondary)',
-                  textDecoration: 'none',
-                  padding: '6px 14px',
-                  borderRadius: 'var(--radius-pill)',
-                  display: 'block',
-                  transition: 'color 0.2s, background 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'var(--text-primary)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--text-secondary)'
-                  e.currentTarget.style.background = 'transparent'
-                }}
+          {navLinks.map((link, index) => {
+            const isActive = activeSection === link.id
+            return (
+              <motion.li
+                key={link.href}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.1, duration: 0.5 }}
               >
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+                <a
+                  href={link.href}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 600,
+                    color: isActive ? '#8b5cf6' : '#475569',
+                    textDecoration: 'none',
+                    position: 'relative',
+                    transition: 'color 0.3s ease',
+                    paddingBottom: '2px',
+                    fontSize: '0.875rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#8b5cf6'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = isActive ? '#8b5cf6' : '#475569'
+                  }}
+                >
+                  {link.label}
+                  {/* Active Underline */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: isActive ? '100%' : '0%',
+                      height: '2px',
+                      background: '#8b5cf6',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </a>
+              </motion.li>
+            )
+          })}
+        </motion.ul>
 
-        {/* Right actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Hire Me CTA */}
-          <a
-            href="#contact"
-            className="hire-me-btn btn-shimmer"
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 'var(--weight-semibold)',
-              fontSize: 'var(--text-small)',
-              color: '#000',
-              background: 'rgba(255,255,255,0.92)',
-              borderRadius: 'var(--radius-pill)',
-              padding: '8px 20px',
-              textDecoration: 'none',
-              flexShrink: 0,
-              transition: 'opacity 0.2s, transform 0.2s',
-              display: 'inline-block',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.04)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            Hire Me
-          </a>
+        {/* Mobile menu button */}
+        <motion.button
+          className="hamburger-btn"
+          onClick={() => setMenuOpen((p) => !p)}
+          aria-label="Toggle navigation menu"
+          aria-expanded={menuOpen}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{
+            display: 'none',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+            color: '#1e293b',
+          }}
+        >
+          {menuOpen ? <X size={28} /> : <Menu size={28} />}
+        </motion.button>
+      </div>
 
-          {/* Hamburger */}
-          <button
-            className="hamburger-btn"
-            onClick={() => setMenuOpen((p) => !p)}
-            aria-label="Toggle navigation menu"
-            aria-expanded={menuOpen}
-            style={{
-              display: 'none',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px',
-              color: 'var(--text-primary)',
-            }}
-          >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
-      </motion.nav>
-
-      {/* Mobile menu */}
+      {/* Mobile menu dropdown */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="glass"
-            initial={{ opacity: 0, y: -10, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: '1rem' }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
-              marginTop: '8px',
-              padding: '16px',
+              overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
-              gap: '4px',
+              background: '#ffffff',
+              borderRadius: '16px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
             }}
           >
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 'var(--weight-medium)',
-                  fontSize: 'var(--text-body)',
-                  color: 'var(--text-secondary)',
-                  textDecoration: 'none',
-                  padding: '12px 16px',
-                  borderRadius: 'var(--radius-sm)',
-                  transition: 'background 0.2s, color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'var(--text-primary)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--text-secondary)'
-                  e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                {link.label}
-              </a>
-            ))}
-            <a
-              href="#contact"
-              onClick={() => setMenuOpen(false)}
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontWeight: 'var(--weight-semibold)',
-                fontSize: 'var(--text-body)',
-                color: '#fff',
-                background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-                borderRadius: 'var(--radius-sm)',
-                padding: '12px 16px',
-                textDecoration: 'none',
-                textAlign: 'center',
-                marginTop: '8px',
-              }}
-            >
-              Hire Me
-            </a>
+            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {navLinks.map((link) => {
+                const isActive = activeSection === link.id
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontWeight: 600,
+                      color: isActive ? '#8b5cf6' : '#475569',
+                      textDecoration: 'none',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      background: isActive ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
+                      transition: 'background 0.2s, color 0.2s',
+                    }}
+                  >
+                    {link.label}
+                  </a>
+                )
+              })}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+      <style>{`
+        @media (max-width: 768px) {
+          .nav-links-desktop { display: none !important; }
+          .hamburger-btn { display: block !important; }
+        }
+      `}</style>
     </header>
   )
 }

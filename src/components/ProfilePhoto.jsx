@@ -125,37 +125,29 @@ export default function ProfilePhoto() {
         cursor: 'none',
       }}
     >
-      {/* ── Dark fill to kill white-background fringe + ambient glow ── */}
-      {/* 1. Outer ambient purple glow */}
+      {/* ── Light Theme Profile Backdrop ── */}
+      {/* Outer subtle soft glow */}
       <div style={{
         position: 'absolute',
-        width: '440px', height: '440px',
+        width: '400px', height: '400px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(140,100,255,0.18) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 60%)',
         top: '50%', left: '50%',
-        transform: 'translate(-50%, -44%)',
+        transform: 'translate(-50%, -46%)',
         pointerEvents: 'none', zIndex: 0,
-        filter: 'blur(8px)',
+        filter: 'blur(16px)',
       }} />
-      {/* 2. Mid dark fill — covers the white fringe zone */}
+      {/* Defined gradient border wrapping the photo */}
       <div style={{
         position: 'absolute',
-        width: '360px', height: '360px',
+        width: '320px', height: '320px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(0,0,0,0.92) 30%, rgba(0,0,0,0.6) 60%, transparent 80%)',
+        background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.05))',
+        border: '2px solid rgba(79, 70, 229, 0.3)',
         top: '50%', left: '50%',
-        transform: 'translate(-50%, -42%)',
+        transform: 'translate(-50%, -43%)',
+        boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.5), 0 12px 32px rgba(79, 70, 229, 0.1)',
         pointerEvents: 'none', zIndex: 1,
-      }} />
-      {/* 3. Tight inner fill to eliminate any remaining white at photo edges */}
-      <div style={{
-        position: 'absolute',
-        width: '280px', height: '300px',
-        borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(0,0,0,0.97) 25%, rgba(0,0,0,0.5) 65%, transparent 85%)',
-        top: '50%', left: '50%',
-        transform: 'translate(-50%, -40%)',
-        pointerEvents: 'none', zIndex: 2,
       }} />
 
       {/* Orbit ring */}
@@ -163,7 +155,7 @@ export default function ProfilePhoto() {
         position: 'absolute',
         width: `${ORBIT_R * 2}px`, height: `${ORBIT_R * 0.8}px`,
         borderRadius: '50%',
-        border: '1px dashed rgba(255,255,255,0.08)',
+        border: '1px dashed rgba(79, 70, 229, 0.3)',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'none', zIndex: 3,
@@ -187,7 +179,7 @@ export default function ProfilePhoto() {
           objectPosition: 'bottom',
           userSelect: 'none',
           pointerEvents: 'none',
-          filter: 'drop-shadow(0 24px 48px rgba(167,139,250,0.35))',
+          filter: 'drop-shadow(0 20px 40px rgba(79, 70, 229, 0.15))',
         }}
       />
 
